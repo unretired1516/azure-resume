@@ -1,6 +1,8 @@
 import azure.functions as func
 import logging
+import json
 from azure.data.tables import TableServiceClient
+
 
 app = func.FunctionApp()
 
@@ -15,25 +17,30 @@ def visitor_counter(req: func.HttpRequest) -> func.HttpResponse:
         table_client = table_service_client.get_table_client(table_name="VisitorCount")
 
         # Get the current count
-        entity = table_client.get_entity(partition_key="global", row_key="count")
-        current_count = entity["Count"]
+        try:
+            entity = table_client.get_entity(partition_key="global", row_key="count")
+            current_count = int(entity["Count"])  # Ensure it's an integer
+        except:
+            logging.warning("Entity not found, initializing count to 0.")
+            current_count = 0
+            table_client.upsert_entity({"PartitionKey": "global", "RowKey": "count", "Count": current_count})
 
         # Increment the count
         new_count = current_count + 1
-        
+
         # Update the entity
         entity["Count"] = new_count
         table_client.update_entity(entity)
 
         # Return the updated count as JSON
         return func.HttpResponse(
-            f'{{"count": {new_count}}}',
+            json.dumps({"count": new_count}),
             mimetype="application/json"
         )
     except Exception as e:
         logging.error(f"Error: {str(e)}")
         return func.HttpResponse(
-            '{"error": "An error occurred while updating the visitor count."}',
+            json.dumps({"error": "An error occurred while updating the visitor count."}),
             status_code=500,
             mimetype="application/json"
         )
