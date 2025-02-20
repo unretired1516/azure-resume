@@ -2,7 +2,7 @@ windows.addEventListener('DOMContentLoaded', (event) => {
     getVisitCount();
 })
 
-const functionApi = '';
+const functionApi = 'http://localhost:7071/api/VisitorCounter';
 //Set variable to 0, call the API get the current count, then set the count variable to equal the response. Then display the count in the InnerText.
 const getVisitCount = () => {
     let count = 0;
