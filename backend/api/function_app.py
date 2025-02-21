@@ -27,9 +27,13 @@ def visitor_counter(req: func.HttpRequest) -> func.HttpResponse:
             current_count = int(entity.get("Count", 0))  # Ensure key exists
             logging.info(f"Current visitor count: {current_count}")
         except Exception as e:
-            logging.warning(f"Entity not found or error retrieving count: {e}")
-            current_count = 0
-            entity = {"PartitionKey": "global", "RowKey": "count", "Count": current_count}
+            logging.error(f"Error: {str(e)}")
+            logging.error(f"Stack Trace: {str(e.__traceback__)}")
+        return func.HttpResponse(
+        json.dumps({"error": f"An error occurred: {str(e)}"}),
+        status_code=500,
+        mimetype="application/json"
+    )
 
         # Increment the count
         entity["Count"] = current_count + 1
