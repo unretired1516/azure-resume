@@ -10,6 +10,14 @@ app = func.FunctionApp()
 def visitor_counter(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
+    # Ensure that the method is GET
+    if req.method != "GET":
+        return func.HttpResponse(
+            json.dumps({"error": "Only GET requests are supported."}),
+            status_code=405,
+            mimetype="application/json"
+        )
+
     try:
         # Retrieve connection string from environment variables
         connection_string = os.getenv("AzureResumeConnectionString")
@@ -27,13 +35,33 @@ def visitor_counter(req: func.HttpRequest) -> func.HttpResponse:
             current_count = int(entity.get("Count", 0))  # Ensure key exists
             logging.info(f"Current visitor count: {current_count}")
         except Exception as e:
-            logging.error(f"Error: {str(e)}")
-            logging.error(f"Stack Trace: {str(e.__traceback__)}")
+            logging.warning(f"Entity not found or error retrieving count: {e}")
+            current_count = 0
+            entity = {"PartitionKey": "global", "RowKey": "count", "Count": current_count}
+
+        # Increment the count
+        entity["Count"] = current_count + 1
+
+        # Use upsert_entity to insert or update
+        table_client.upsert_entity(entity)
+        logging.info(f"Entity after upsert: {table_client.get_entity(partition_key='global', row_key='count')}")
+
+        # ✅ Always return a valid response
         return func.HttpResponse(
-        json.dumps({"error": f"An error occurred: {str(e)}"}),
-        status_code=500,
-        mimetype="application/json"
-    )
+            json.dumps({"count": entity["Count"]}),
+            mimetype="application/json"
+        )
+
+    except Exception as e:
+        logging.error(f"Error: {str(e)}")
+
+        # ✅ Ensure we return a response even in failure cases
+        return func.HttpResponse(
+            json.dumps({"error": f"An error occurred: {str(e)}"}),
+            status_code=500,
+            mimetype="application/json"
+        )
+
 
         # Increment the count
         entity["Count"] = current_count + 1
