@@ -1,4 +1,4 @@
-windows.addEventListener('DOMContentLoaded', (event) => {
+window.addEventListener('DOMContentLoaded', (event) => {
     getVisitCount();
 })
 const functionApiURL = 'https://getazureresumecounteruniqueidentifierhere.azurewebsites.net/api/VisitorCounter?code=wiNDrGe0UJcCdSuLC18Z90TqErEZVNVThmLsFedWnNK0AzFuWKh58A=='
