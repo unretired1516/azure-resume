@@ -61,27 +61,3 @@ def visitor_counter(req: func.HttpRequest) -> func.HttpResponse:
             status_code=500,
             mimetype="application/json"
         )
-
-
-        # Increment the count
-        entity["Count"] = current_count + 1
-
-        # Use upsert_entity to insert or update
-        table_client.upsert_entity(entity)
-        logging.info(f"Entity after upsert: {table_client.get_entity(partition_key='global', row_key='count')}")
-
-        # ✅ Always return a valid response
-        return func.HttpResponse(
-            json.dumps({"count": entity["Count"]}),
-            mimetype="application/json"
-        )
-
-    except Exception as e:
-        logging.error(f"Error: {str(e)}")
-
-        # ✅ Ensure we return a response even in failure cases
-        return func.HttpResponse(
-            json.dumps({"error": f"An error occurred: {str(e)}"}),
-            status_code=500,
-            mimetype="application/json"
-        )
